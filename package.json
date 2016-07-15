@@ -2,9 +2,16 @@
   "version": "0.0.0",
   "license": "MIT",
   "name": "sob",
-  "description": "",
+  "description": "Schedule on Browser through single rAF and rIC mechanism",
   "homepage": "https://github.com/WebReflection/sob",
-  "keywords": [],
+  "keywords": [
+    "rAF",
+    "rIC",
+    "requestAnimationFrame",
+    "requestIdleCallback",
+    "setTimeout",
+    "performance"
+  ],
   "author": {
     "name": "Andrea Giammarchi",
     "web": "http://webreflection.blogspot.com/"
@@ -15,7 +22,7 @@
   },
   "main": "./build/sob.node.js",
   "scripts": {
-    "test": "node test/.test.js||phantomjs testrunner.js",
+    "test": "phantomjs testrunner.js",
     "web": "node node_modules/tiny-cdn/tiny-cdn run -p=1337",
     "install-global-dev": "node -e '(function(o){for(var k in o)require(\"child_process\").spawn(\"npm\",[\"install\",\"-g\",k+\"@\"+o[k]]).on(\"exit\",console.log.bind(console,k+\"@\"+o[k]));}(require(\"package.json\").globalDevDependencies))'"
   },

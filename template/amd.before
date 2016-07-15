@@ -1,1 +1,3 @@
-define(
+define(function () {
+
+var global = window;
