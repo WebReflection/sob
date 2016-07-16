@@ -1,1 +1,1 @@
-var sob = (function (global) {
+var sob = (function (global) {'use strict';
