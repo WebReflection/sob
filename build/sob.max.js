@@ -22,6 +22,11 @@ THE SOFTWARE.
 */
 var sob = (function (global) {'use strict';
 //! (C) Andrea Giammarchi @WebReflection - MIT Style License
+
+// TODO:
+//  make it possible to define a timeout for the IDLE
+//  define a default timeout anyway or non compatible browsers
+//  might actually never trigger a thing
 var
   // local shams
   performance = global.performance || {now: Date.now},
@@ -130,8 +135,6 @@ var
   // rAF and rIC states
   frameRunning = false,
   idleRunning = false,
-  // previous rAF length
-  previousLength = 0,
   // animation frame and idle queues
   qframe = [],
   qidle = [],
@@ -173,17 +176,17 @@ function animationLoop() {
       // if we exceeded the frame time, get out this loop
       if (overTime) break;
     }
-    // update the current frame queue length
-    length += 1 + qframe.length;
     // flag eventually the isOverloaded info
-    next.isOverloaded = overTime || length > previousLength;
-    // update the previous length info
-    previousLength = length;
-    // if debug is true and there is an overload, warn it
-    if (next.debug && next.isOverloaded) console.warn('overloaded frame');
+    next.isOverloaded = overTime;
+    if (overTime) {
+      // if debug is true warn about it
+      if (next.debug) console.warn('overloaded frame');
+    }
     // if the browser has no idle callback and there's no overload
-    // execute one callback of the idle queue
-    if (NO_IDLE && !overTime && qidle.length) exec(qidle.shift());
+    else if (NO_IDLE && qidle.length) {
+      // execute one callback of the idle queue
+      exec(qidle.shift());
+    }
   } else {
     // all frame callbacks have been executed
     // we can actually stop asking for animation frames
