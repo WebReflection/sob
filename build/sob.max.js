@@ -26,15 +26,20 @@ var
   requestAnimationFrame = global.requestAnimationFrame ||
                           global.webkitRequestAnimationFrame ||
                           global.mozRequestAnimationFrame ||
-                          function (fn) {
-                            setTimeout(fn, 16);
-                          },
+                          function (fn) { setTimeout(fn, 16); },
   requestIdleCallback = global.requestIdleCallback,
   NO_IDLE = !requestIdleCallback,
   performance = global.performance || {now: Date.now},
-  now = (performance.now || performance.webkitNow || function () {
-    return (new Date()).getTime();
-  }),
+  now = (
+    performance.now ||
+    performance.webkitNow ||
+    function now() {
+      return (new Date()).getTime();
+    }
+  ),
+  compareValue = function compareValue(value, i) {
+    return value === this[i];
+  },
   create = function create(callback) {
     for (var
       queue = this,
@@ -48,8 +53,13 @@ var
     ) args[i - 1] = arguments[i];
     return infoId(queue, info) || (queue.push(info), info.id);
   },
-  compareValue = function compareValue(value, i) {
-    return value === this[i];
+  drop = function drop(queue, id) {
+    var
+      i = findIndex(queue, id),
+      found = -1 < i
+    ;
+    if (found) queue.splice(i, 1);
+    return found;
   },
   exec = function exec(info) {
     info.fn.apply(null, info.ar);
@@ -70,67 +80,87 @@ var
     }
     return null;
   },
-  drop = function drop(queue, id) {
-    var
-      i = findIndex(queue, id),
-      found = -1 < i
-    ;
-    if (found) queue.splice(i, 1);
-    return found;
-  },
-  previousLength = 0,
-  qframe = [],
-  qidle = [],
   next = {
     debug: false,
     isOverloaded: false,
     minFPS: 60,
     clear: function clear(id) {
-      if (!drop(qframe, id)) drop(qidle, id);
+      void(
+        drop(qframe, id) ||
+        drop(qidle, id) ||
+        drop(qframex, id) ||
+        drop(qidlex, id)
+      );
     },
     frame: function frame() {
+      runIfNeeded();
       return create.apply(qframe, arguments);
     },
     idle: function idle() {
+      if (NO_IDLE) {
+        runIfNeeded();
+      } else if (!idleRunning) {
+        idleRunning = true;
+        requestIdleCallback(idleLoop);
+      }
       return create.apply(qidle, arguments);
+    }
+  },
+  frameRunning = false,
+  idleRunning = false,
+  previousLength = 0,
+  qframe = [],
+  qidle = [],
+  qframex = [],
+  qidlex = [],
+  runIfNeeded = function () {
+    if (!frameRunning) {
+      frameRunning = true;
+      requestAnimationFrame(animationLoop);
     }
   }
 ;
 
-(function animationLoop() {
+function animationLoop() {
   var
     t = now.call(performance),
     fps = 1000 / next.minFPS,
-    overTime = false,
-    info
+    overTime = false
   ;
-  while (qframe.length) {
-    exec(qframe.shift());
+  qframex = qframe.splice(0, qframe.length);
+  while (qframex.length) {
+    exec(qframex.shift());
     overTime = (now.call(performance) - t) >= fps;
     if (overTime) break;
   }
-  if (NO_IDLE && !overTime && qidle.length) {
-    exec(qidle.shift());
-  }
+  if (qframex.length) qframe.unshift.apply(qframe, qframex);
   next.isOverloaded = qframe.length > previousLength;
   previousLength = qframe.length;
+  if (NO_IDLE && !overTime && qidle.length) exec(qidle.shift());
   if (next.debug && next.isOverloaded)
     console.warn('overloaded frame');
-  requestAnimationFrame(animationLoop);
-}());
+  if (qframe.length || (NO_IDLE && qidle.length)) {
+    requestAnimationFrame(animationLoop);
+  } else {
+    frameRunning = false;
+    next.isOverloaded = frameRunning;
+  }
+}
 
-if (!NO_IDLE) (function idleLoop() {
+function idleLoop() {
   var
     t = now.call(performance),
-    fps = 1000 / next.minFPS,
-    info
+    fps = 1000 / next.minFPS
   ;
-  while (qidle.length) {
-    exec(qidle.shift());
+  qidlex = qidle.splice(0, qidle.length);
+  while (qidlex.length) {
+    exec(qidlex.shift());
     if ((now.call(performance) - t) >= fps) break;
   }
-  requestIdleCallback(idleLoop);
-}());
+  if (qidlex.length) qidle.unshift.apply(qidle, qidlex);
+  if (qidle.length) requestIdleCallback(idleLoop);
+  else idleRunning = false;
+}
 return next;
 
 }(window));

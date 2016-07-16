@@ -319,11 +319,29 @@ wru.test([
     test: function () {
       sob.frame(function () {
         var t = (new Date).getTime();
-        while ((new Date).getTime() - t < (1000 / sob.minFPS));
+        while ((new Date).getTime() - t < (1000 / (sob.minFPS / 2)));
       });
       sob.frame(wru.async(function () {
         wru.assert(sob.isOverloaded);
       }));
+    }
+  }, {
+    name: 'multiple calls',
+    test: function () {
+      var
+        frame = 0,
+        idle = 0,
+        done = wru.async(function () {
+          wru.assert(true);
+        })
+      ;
+      (function f() {
+        if (frame++ < 10) sob.frame(f);
+        else if (frame >= 10 && idle === 10) done();
+      }());
+      (function i() {
+        if (idle++ < 10) sob.idle(i);
+      }());
     }
   }
 ]);
