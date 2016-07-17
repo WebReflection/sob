@@ -343,5 +343,29 @@ wru.test([
         if (++idle < 10) sob.idle(i);
       }());
     }
+  }, {
+    name: 'fail safe frame',
+    test: function () {
+      var calls = [];
+      sob.frame(function a() { calls.push('a'); });
+      sob.frame(function b() { throw new Error('b'); });
+      sob.frame(function c() { calls.push('c'); });
+      sob.frame(function d() { calls.push('d'); });
+      sob.frame(wru.async(function () {
+        wru.assert(calls.join(',') === 'a,c,d');
+      }));
+    }
+  }, {
+    name: 'fail safe idle',
+    test: function () {
+      var calls = [];
+      sob.idle(function a() { calls.push('a'); });
+      sob.idle(function b() { throw new Error('b'); });
+      sob.idle(function c() { calls.push('c'); });
+      sob.idle(function d() { calls.push('d'); });
+      sob.idle(wru.async(function () {
+        wru.assert(calls.join(',') === 'a,c,d');
+      }));
+    }
   }
 ]);
