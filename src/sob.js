@@ -10,9 +10,7 @@ var
   now = (
     performance.now ||
     performance.webkitNow ||
-    function now() {
-      return (new Date()).getTime();
-    }
+    function now() { return (new Date()).getTime(); }
   ),
   requestAnimationFrame = global.requestAnimationFrame ||
                           global.webkitRequestAnimationFrame ||
@@ -22,9 +20,6 @@ var
   // CONSTANTS
   NO_IDLE = !requestIdleCallback,
   // local helpers
-  compareValue = function compareValue(value, i) {
-    return value === this[i];
-  },
   create = function create(callback) {
     for (var
       queue = this,
@@ -54,13 +49,20 @@ var
     while (i-- && queue[i].id !== id);
     return i;
   },
+  geLength = function geLength(queue, queuex) {
+    // if previous call didn't execute all callbacks
+    return queuex.length ?
+      // reprioritize the queue putting those in front
+      queue.unshift.apply(queue, queuex) :
+      queue.length;
+  },
   infoId = function infoId(queue, info) {
     for (var i = 0, tmp; i < queue.length; i++) {
       tmp = queue[i];
       if (
         tmp.fn === info.fn &&
         tmp.ar.length === info.ar.length &&
-        tmp.ar.every(compareValue, info.ar)
+        sameValues(tmp.ar, info.ar)
       ) return tmp.id;
     }
     return null;
@@ -71,6 +73,25 @@ var
       requestAnimationFrame(animationLoop);
     }
   },
+  runUntilOvertime = function (queue, t) {
+    // calculate how many millisends we have
+    var fps = 1000 / next.minFPS;
+    // execute the whole queue
+    while (queue.length) {
+      // if some of them fails, it's OK
+      // next round will re-prioritize the animation frame queue
+      exec(queue.shift());
+      // if we exceeded the frame time, get out this loop
+      if ((now.call(performance) - t) >= fps) return true;
+    }
+    return false;
+  },
+  sameValues = function sameValues(a, b) {
+    for (var i = 0, length = a.length; i < length; i++) {
+      if (a[i] !== b[i]) return false;
+    }
+    return true;
+  },
   // exported module
   next = {
     // if true, shows "frame overload" when it happens
@@ -79,6 +100,8 @@ var
     isOverloaded: false,
     // minimum accepted FPS (suggested range 20 to 60)
     minFPS: 60,
+    // maximum delay per each requestIdleCallback operation
+    maxIdle: 1000,
     // remove a scheduled frame or idle operation
     clear: function clear(id) {
       void(
@@ -103,7 +126,7 @@ var
         runIfNeeded();
       } else if (!idleRunning) {
         idleRunning = true;
-        requestIdleCallback(idleLoop);
+        requestIdleCallback(idleLoop, {timeout: next.maxIdle});
       }
       return create.apply(qidle, arguments);
     }
@@ -125,44 +148,29 @@ function animationLoop() {
   var
     // grab current time
     t = now.call(performance),
-    // calculate how many millisends we have
-    fps = 1000 / next.minFPS,
     // used to flag overtime in case we exceed milliseconds
     overTime = false,
     // take current frame queue length
-    // if previous call didn't execute all callbacks
-    length = qframex.length ?
-      // reprioritize the queue putting those in front
-      qframe.unshift.apply(qframe, qframex) :
-      qframe.length
+    length = geLength(qframe, qframex)
   ;
   // if there is actually something to do
   if (length || (NO_IDLE && qidle.length)) {
     // reschedule upfront next animation frame
-    requestAnimationFrame(animationLoop);
     // this prevents the need for a try/catch within the while loop
+    requestAnimationFrame(animationLoop);
     // reassign qframex cleaning current animation frame queue
     qframex = qframe.splice(0, length);
-    // try to execute all of them
-    while (length--) {
-      // if some of them fails, it's OK
-      // next round will re-prioritize the animation frame queue
-      exec(qframex.shift());
-      // store eventual overtime info
-      overTime = (now.call(performance) - t) >= fps;
-      // if we exceeded the frame time, get out this loop
-      if (overTime) break;
-    }
-    // flag eventually the isOverloaded info
-    next.isOverloaded = overTime;
-    if (overTime) {
-      // if debug is true warn about it
+    // flag eventual overload info
+    if ((next.isOverloaded = runUntilOvertime(qframex, t))) {
+      // and if debug is true, warn about it
       if (next.debug) console.warn('overloaded frame');
     }
     // if the browser has no idle callback and there's no overload
-    else if (NO_IDLE && qidle.length) {
-      // execute one callback of the idle queue
-      exec(qidle.shift());
+    else if (NO_IDLE) {
+      // execute callbacks from the idle queue
+      runUntilOvertime((qidlex = qidle.splice(
+        0, geLength(qidle, qidlex)
+      )), t);
     }
   } else {
     // all frame callbacks have been executed
@@ -178,30 +186,18 @@ function idleLoop() {
   var
     // grab current time
     t = now.call(performance),
-    // calculate how many millisends we have
-    fps = 1000 / next.minFPS,
     // take current idle queue length
     // if previous call didn't execute all callbacks
-    length = qidlex.length ?
-      // reprioritize the queue putting those in front
-      qidle.unshift.apply(qidle, qidlex) :
-      qidle.length
+    length = geLength(qidle, qidlex)
   ;
   // if there is actually something to do
   if (length) {
     // reschedule upfront next idle callback
-    requestIdleCallback(idleLoop);
+    requestIdleCallback(idleLoop, {timeout: next.maxIdle});
     // this prevents the need for a try/catch within the while loop
     // reassign qidlex cleaning current idle queue
     qidlex = qidle.splice(0, length);
-    // try to execute all of them
-    while (length--) {
-      // if some of them fails, it's OK
-      // next round will re-prioritize the idle queue
-      exec(qidlex.shift());
-      // if we exceeded the frame time, get out this loop
-      if ((now.call(performance) - t) >= fps) break;
-    }
+    runUntilOvertime(qidlex, t);
   } else {
     // all idle callbacks have been executed
     // we can actually stop asking for idle operations
