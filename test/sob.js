@@ -336,11 +336,11 @@ wru.test([
         })
       ;
       (function f() {
-        if (frame++ < 10) sob.frame(f);
-        else if (frame >= 10 && idle === 10) done();
+        if (++frame >= 10 && idle === 10) done();
+        else sob.frame(f);
       }());
       (function i() {
-        if (idle++ < 10) sob.idle(i);
+        if (++idle < 10) sob.idle(i);
       }());
     }
   }
