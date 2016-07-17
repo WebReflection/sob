@@ -56,7 +56,7 @@ var
         t = time();
         timeout(function () {
           fn({
-            // not used now, it might be used one day
+            // when this happens, forces at least one task to be executed no matter what
             didTimeout: options.timeout < (time() - st),
             // returns how much time left
             timeRemaining: function () {
@@ -210,14 +210,17 @@ function getLength(queue, queuex) {
 
 // responsible for centralized requestIdleCallback operations
 function idleLoop(deadline) {
-  var length = getLength(qidle, qidlex);
+  var
+    length = getLength(qidle, qidlex),
+    didTimeout = deadline.didTimeout
+  ;
   if (length) {
     // reschedule upfront next idle callback
     requestIdleCallback(idleLoop, {timeout: next.maxIdle});
     // this prevents the need for a try/catch within the while loop
     // reassign qidlex cleaning current idle queue
-    qidlex = qidle.splice(0, length);
-    while (qidlex.length && deadline.timeRemaining())
+    qidlex = qidle.splice(0, didTimeout ? 1 : length);
+    while (qidlex.length && (didTimeout || deadline.timeRemaining()))
       exec(qidlex.shift());
   } else {
     // all idle callbacks have been executed
