@@ -51,3 +51,4 @@ The TL;DR verion is that whenever you'd like to use `requestAnimationFrame` or `
   console.log('idle');
 }());
 ```
+
