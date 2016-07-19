@@ -1,5 +1,5 @@
 {
-  "version": "0.0.5",
+  "version": "0.0.6",
   "license": "MIT",
   "name": "sob",
   "description": "Schedule on Browser through single rAF and rIC mechanism",
@@ -31,7 +31,7 @@
     "jshint": "2",
     "browserify": "*",
     "watchify": "*",
-    "phantomjs": "*",
+    "phantomjs-prebuilt": "*",
     "tiny-cdn": "*"
   },
   "devDependencies": {

@@ -128,6 +128,7 @@ dependencies:
 	npm install markdown
 	npm install browserify
 	npm install watchify
+	npm install phantomjs-prebuilt
 
 # bundle: creates the browserified version of the project as js/bundle.max.js
 bundle:

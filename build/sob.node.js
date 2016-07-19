@@ -217,8 +217,9 @@ function idleLoop(deadline) {
     // this prevents the need for a try/catch within the while loop
     // reassign qidlex cleaning current idle queue
     qidlex = qidle.splice(0, didTimeout ? 1 : length);
-    while (qidlex.length && (didTimeout || deadline.timeRemaining()))
+    if (qidlex.length && (didTimeout || deadline.timeRemaining())) {
       exec(qidlex.shift());
+    }
   } else {
     // all idle callbacks have been executed
     // we can actually stop asking for idle operations
