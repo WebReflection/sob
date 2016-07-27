@@ -95,6 +95,10 @@ var
   qidlex = []
 ;
 
+// asliases
+next.raf = next.frame;
+next.ric = next.idle;
+
 // responsible for centralized requestAnimationFrame operations
 function animationLoop() {
   var
@@ -210,7 +214,6 @@ function infoId(queue, info) {
     tmp = queue[i];
     if (
       tmp.fn === info.fn &&
-      tmp.ar.length === info.ar.length &&
       sameValues(tmp.ar, info.ar)
     ) return tmp.id;
   }
@@ -219,10 +222,19 @@ function infoId(queue, info) {
 
 // compare two arrays values
 function sameValues(a, b) {
-  for (var i = 0, length = a.length; i < length; i++) {
-    if (a[i] !== b[i]) return false;
+  var
+    i = a.length,
+    j = b.length,
+    k = i === j
+  ;
+  if (k) {
+    while (i--) {
+      if (a[i] !== b[i]) {
+        return !k;
+      }
+    }
   }
-  return true;
+  return k;
 }
 
 // return performance.now() real or sham value

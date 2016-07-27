@@ -367,5 +367,21 @@ wru.test([
         wru.assert(calls.join(',') === 'a,c,d');
       }));
     }
+  }, {
+    name: 'performance',
+    test: function () {
+      var
+        counter = 0,
+        id
+      ;
+      setTimeout(wru.async(function () {
+        sob.clear(id);
+        wru.assert('frames ' + counter, 60 <= counter);
+      }), 1000);
+      (function run() {
+        counter++;
+        id = sob.frame(run);
+      }());
+    }
   }
 ]);
