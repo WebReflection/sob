@@ -17,14 +17,14 @@ Following all methods provided by the object returned via this module.
 const sob = require('sob');
 ```
 
-#### `sob.frame(fn) => uniqueId` (with alias: `raf`)
+#### `sob.frame(fn) => uniqueId`
 Schedules `fn` for the next possible `requestAnimationFrame` without compromising performance.
 It returns a unique id usable to `sob.clear(uid)` if necessary.
 
 #### `sob.frame(fn, arg1, arg2, argN) => uniqueId`
 Similar to `sob.frame(fn)`, it schedules `fn` for the next possible `requestAnimationFrame` invoking it with optionally provided arguments.
 
-#### `sob.idle(fn) => uniqueId` (with alias: `ric`)
+#### `sob.idle(fn) => uniqueId`
 Schedules `fn` for the next possible `requestIdleCallback` without compromising performance.
 It returns a unique id usable to `sob.clear(uid)` if necessary.
 
