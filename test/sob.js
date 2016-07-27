@@ -376,7 +376,7 @@ wru.test([
       ;
       setTimeout(wru.async(function () {
         sob.clear(id);
-        wru.assert('frames ' + counter, 60 <= counter);
+        wru.assert('frames ' + counter, sob.minFPS <= counter);
       }), 1000);
       (function run() {
         counter++;
