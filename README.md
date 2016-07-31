@@ -7,7 +7,7 @@ Things this module does:
 
   * it [doesn't overload](https://medium.com/@paul_irish/requestanimationframe-scheduling-for-nerds-9c57f7438ef4#.dui1p8y4f) the `requestAnimationFrame` internal queue
   * it schedules `frame` or `idle` passing extra arguments if specified, same as `setTimeout` and `setInterval` or `setImmediate`
-  * it avoids duplicated scheduling of the same callback with same optional arguments
+  * it avoids duplicated scheduling of the same callback with same optional arguments (TL;DR it does throttle)
   * it makes `cancelAnimationFrame` and `cancelIdleCallback` consistent across browsers via `clear` method and for both scheduled queue and currently executed one
   * it provides a similar `requestIdleCallback` mechanism for every browser
 
