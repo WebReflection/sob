@@ -29,7 +29,7 @@ build:
 var:
 	mkdir -p build
 	cat template/var.before $(VAR) template/var.after >build/no-copy.$(REPO).max.js
-	node node_modules/uglify-js/bin/uglifyjs --verbose build/no-copy.$(REPO).max.js >build/no-copy.$(REPO).js
+	node node_modules/.bin/uglifyjs --verbose build/no-copy.$(REPO).max.js >build/no-copy.$(REPO).js
 	cat template/license.before LICENSE.txt template/license.after build/no-copy.$(REPO).max.js >build/$(REPO).max.js
 	cat template/copyright build/no-copy.$(REPO).js >build/$(REPO).js
 	rm build/no-copy.$(REPO).max.js
@@ -44,7 +44,7 @@ node:
 amd:
 	mkdir -p build
 	cat template/amd.before $(AMD) template/amd.after >build/no-copy.$(REPO).max.amd.js
-	node node_modules/uglify-js/bin/uglifyjs --verbose build/no-copy.$(REPO).max.amd.js >build/no-copy.$(REPO).amd.js
+	node node_modules/.bin/uglifyjs --verbose build/no-copy.$(REPO).max.amd.js >build/no-copy.$(REPO).amd.js
 	cat template/license.before LICENSE.txt template/license.after build/no-copy.$(REPO).max.amd.js >build/$(REPO).max.amd.js
 	cat template/copyright build/no-copy.$(REPO).amd.js >build/$(REPO).amd.js
 	rm build/no-copy.$(REPO).max.amd.js
@@ -69,7 +69,7 @@ size:
 
 # hint built file
 hint:
-	node node_modules/jshint/bin/jshint build/$(REPO).max.js
+	node node_modules/.bin/jshint build/$(REPO).max.js
 
 # clean/remove build folder
 clean:
@@ -81,7 +81,7 @@ test:
 
 # launch tiny-cdn (ctrl+click to open the page)
 web:
-	node node_modules/tiny-cdn/tiny-cdn run
+	node node_modules/.bin/tiny-cdn run
 
 # markdown the readme and view it
 preview:

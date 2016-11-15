@@ -24,7 +24,11 @@ define(function () {
 
 var global = window;
 var
-  // local shortcuts with shams
+  // local shortcuts
+  type,
+  hidden,
+  tabIsVisible = true,
+  onceVisible = [],
   performance = (
     global.performance ||
     {now: Date.now}
@@ -39,7 +43,7 @@ var
     global.requestAnimationFrame ||
     global.webkitRequestAnimationFrame ||
     global.mozRequestAnimationFrame ||
-    function (fn) { setTimeout(fn, 16); }
+    function (fn) { timeout(fn, 16); }
   ),
   requestIdleCallback = (
     global.requestIdleCallback ||
@@ -67,6 +71,7 @@ var
       }, fps);
     }
   ),
+  clear = global.clearInterval,
   timeout = global.setTimeout,
   // exported module
   next = {
@@ -78,14 +83,16 @@ var
     minFPS: 60,
     // maximum delay per each requestIdleCallback operation
     maxIdle: 2000,
-    // remove a scheduled frame or idle operation
-    clear: function clear(id) {
-      void(
-        drop(qframe, id) ||
-        drop(qidle, id) ||
-        drop(qframex, id) ||
-        drop(qidlex, id)
-      );
+    // remove a scheduled frame, idle, or timer operation
+    clear: function (id) {
+      return typeof id === 'number' ?
+        clear(id) :
+        void(
+          drop(qframe, id) ||
+          drop(qidle, id) ||
+          drop(qframex, id) ||
+          drop(qidlex, id)
+        );
     },
     // schedule a callback for the next frame
     // returns its unique id as object
@@ -106,7 +113,10 @@ var
         requestIdleCallback(idleLoop, {timeout: next.maxIdle});
       }
       return create.apply(qidle, arguments);
-    }
+    },
+    interval: createTimer(global.setInterval),
+    timeout: createTimer(timeout),
+    now: now
   },
   // local variables
   // rAF and rIC states
@@ -123,6 +133,26 @@ var
 // asliases
 next.raf = next.frame;
 next.ric = next.idle;
+
+switch (true) {
+  case 'hidden' in document:
+    hidden = 'hidden';
+    type = 'visibilitychange';
+    break;
+  case 'msHidden' in document:
+    hidden = 'msHidden';
+    type = 'msvisibilitychange';
+    break;
+  case 'webkitHidden' in document:
+    hidden = 'webkitHidden';
+    type = 'webkitvisibilitychange';
+    break;
+}
+
+if (hidden) {
+  document.addEventListener(type, onVisibility, false);
+  onVisibility();
+}
 
 // responsible for centralized requestAnimationFrame operations
 function animationLoop() {
@@ -178,6 +208,23 @@ function create(callback) {
     i = 1; i < arguments.length; i++
   ) args[i - 1] = arguments[i];
   return infoId(queue, info) || (queue.push(info), info.id);
+}
+
+// create setTimeout or setInterval wrapper
+function createTimer(timer) {
+  return function (fn) {
+    // overwrite the function with one that
+    // execute only if the tab is visible
+    // scheduling eventually for later and once
+    // in case the tab is not
+    arguments[0] = function () {
+      if (tabIsVisible) fn.apply(null, arguments);
+      else if (onceVisible.indexOf(fn) < 0) {
+        onceVisible.push(fn, arguments);
+      }
+    };
+    return timer.apply(null, arguments);
+  };
 }
 
 // remove a scheduled id from a queue
@@ -243,6 +290,17 @@ function infoId(queue, info) {
     ) return tmp.id;
   }
   return null;
+}
+
+function onVisibility() {
+  tabIsVisible = !document[hidden];
+  for (var
+    length = onceVisible.length,
+    list = onceVisible.splice(0, length),
+    i = 0; i < length; i += 2
+  ) {
+    list[i].apply(null, list[i + 1]);
+  }
 }
 
 // compare two arrays values

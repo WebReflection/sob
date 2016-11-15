@@ -383,5 +383,23 @@ wru.test([
         id = sob.frame(run);
       }());
     }
+  }, {
+    name: 'visibility dependent',
+    test: function () {
+      setTimeout(wru.async(function () {
+        wru.assert('counter incremented only 3 times', counter === 3);
+      }), 300);
+      var counter = 0, i = sob.interval(function () {
+        counter++;
+      }, 70);
+      sob.timeout(function () {
+        counter++;
+        sob.clear(i);
+        i = sob.timeout(function () {
+          counter++;
+        }, 0);
+        sob.clear(i);
+      }, 180);
+    }
   }
 ]);
